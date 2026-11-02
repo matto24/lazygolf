@@ -65,13 +65,17 @@ local function scratch(lines)
   return buf
 end
 
+local INDENT = { lua = 2 }
+
+---Pin indentation after the filetype plugins ran, so goals do not depend on the user's global shiftwidth.
 ---@param buf integer
 local function apply_filetype(buf, ft)
+  local width = INDENT[ft] or 4
   vim.bo[buf].filetype = ft
   vim.bo[buf].expandtab = true
-  vim.bo[buf].shiftwidth = 4
-  vim.bo[buf].tabstop = 4
-  vim.bo[buf].softtabstop = 4
+  vim.bo[buf].shiftwidth = width
+  vim.bo[buf].tabstop = width
+  vim.bo[buf].softtabstop = width
 end
 
 ---@param challenge LazyGolf.Challenge

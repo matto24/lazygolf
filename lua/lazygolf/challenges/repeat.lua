@@ -70,11 +70,11 @@ return {
       cursor = { 1, 0 },
       goal = {
         kind = "text",
-        lines = { "fn mix(a: i64, b: i64, c: i64) -> i64 {", "    a + b + c", "}" },
+        lines = { "fn mix(a: i64, b: i64, c: i64) -> i32 {", "    a + b + c", "}" },
       },
-      par = 12,
-      solution = "f3R64<Esc>;.;.;.",
-      explain = "`f3` lands on the first `3`, `R64<Esc>` overwrites `32` with `64`, then `;.` three times hits the rest. `:s/32/64/g` costs 14.",
+      par = 10,
+      solution = "f3R64<Esc>;.;.",
+      explain = "`f3` lands on the first `3`, `R64<Esc>` overwrites `32` with `64`, then `;.` twice hits the other parameters. A plain `:s/32/64/g` would also rewrite the return type.",
     },
     {
       id = "repeat-cgn",
