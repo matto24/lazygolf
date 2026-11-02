@@ -233,6 +233,70 @@ local function test_state_machine()
   record({ id = "state machine + commands", par = 0, keys = 0, status = ok and "PASS" or "FAIL", note = table.concat(msgs, "; ") })
 end
 
+local function test_game_flow()
+  local progress = require("lazygolf.progress")
+  local game = require("lazygolf.game")
+  local challenges = require("lazygolf.challenges")
+  local tmp = vim.fn.tempname() .. ".json"
+  progress.path = tmp
+  progress.reload()
+
+  local ok, msgs = true, {}
+  local function expect(cond, msg)
+    if not cond then
+      ok = false
+      msgs[#msgs + 1] = msg
+    end
+  end
+
+  local text_ch = challenges.by_id["ops-ciw"]
+  local cursor_ch = challenges.by_id["motions-count-w"]
+
+  game.start(text_ch)
+  local s = game.state.session
+  expect(vim.wo[s.win].diff and vim.wo[s.target_win].diff, "text goal shows both windows in diff mode")
+  expect(not vim.bo[s.target_buf].modifiable, "target buffer is read-only")
+  expect(vim.bo[s.buf].filetype == text_ch.filetype, "filetype applied to the challenge buffer")
+  local winbar = vim.api.nvim_eval_statusline(vim.wo[s.win].winbar, { winid = s.win }).str
+  expect(winbar:find("keys 0 / par " .. text_ch.par, 1, true) ~= nil, "winbar shows keys and par: " .. winbar)
+
+  feed(text_ch.solution)
+  wait_until(function() return game.state.kind == "solved" end, 2000)
+  sleep(30)
+  expect(game.state.kind == "solved", "solved after the reference solution")
+  local info = table.concat(vim.api.nvim_buf_get_lines(s.info_buf, 0, -1, false), "\n")
+  expect(info:find("Solved in " .. text_ch.par .. " keys", 1, true) ~= nil, "info panel reports the result")
+  expect(info:find(text_ch.explain:sub(1, 20), 1, true) ~= nil, "info panel shows the explanation")
+  expect(progress.best(text_ch.id) == text_ch.par, "best recorded in progress")
+  expect(vim.fn.filereadable(tmp) == 1, "progress file written on solve")
+  local solved_keys = game.state.keys
+  feed("lll")
+  sleep(50)
+  expect(game.state.kind == "solved" and game.state.keys == solved_keys, "keys after solving are not counted")
+
+  feed("<leader>;r")
+  wait_until(function() return game.state.kind == "playing" end, 1000)
+  sleep(30)
+  expect(game.state.kind == "playing" and game.state.keys == 0, "restart key returns to a fresh playing state")
+  expect(vim.deep_equal(vim.api.nvim_buf_get_lines(game.state.session.buf, 0, -1, false), text_ch.start), "restart restores the start text")
+
+  game.start(cursor_ch)
+  s = game.state.session
+  local marks = vim.api.nvim_buf_get_extmarks(s.buf, vim.api.nvim_create_namespace("lazygolf"), 0, -1, {})
+  expect(#marks == 1 and s.target_win == nil, "cursor goal highlights one cell and has no target window")
+
+  local before = #vim.api.nvim_list_tabpages()
+  vim.cmd("tabclose")
+  sleep(30)
+  expect(game.state.kind == "menu", "closing the game tab returns to the menu state")
+  expect(#vim.api.nvim_list_tabpages() == before - 1, "tab closed")
+
+  vim.fn.delete(tmp)
+  progress.path = nil
+  progress.reload()
+  record({ id = "game flow (ui, restart, close)", par = 0, keys = 0, status = ok and "PASS" or "FAIL", note = table.concat(msgs, "; ") })
+end
+
 local function main()
   vim.opt.rtp:prepend(root)
   vim.cmd("runtime plugin/lazygolf.lua")
@@ -257,6 +321,7 @@ local function main()
   if not only then
     test_progress()
     test_state_machine()
+    test_game_flow()
   end
 
   out(("%-34s %5s %5s  %s"):format("challenge", "keys", "par", "result"))

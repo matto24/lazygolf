@@ -27,7 +27,8 @@ local function build()
         if not challenges.available(ch) then
           suffix = ("needs %s"):format(ch.requires)
         end
-        lines[#lines + 1] = ("  %s  %-34s par %-3d %s"):format(layout.stars_text(progress.stars(ch)), ch.title, ch.par, suffix)
+        local row = ("  %s  %-46s par %-3d %s"):format(layout.stars_text(progress.stars(ch)), ch.title, ch.par, suffix)
+        lines[#lines + 1] = vim.trim(row) == "" and row or row:gsub("%s+$", "")
         rows[#lines] = ch
       end
     end
@@ -42,7 +43,7 @@ function M.open()
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
 
-  local width = math.min(76, vim.o.columns - 4)
+  local width = math.min(84, vim.o.columns - 4)
   local height = math.min(#lines, vim.o.lines - 6)
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
@@ -54,8 +55,18 @@ function M.open()
     title = " LazyGolf ",
     title_pos = "center",
   })
-  vim.wo[win].cursorline = true
-  vim.wo[win].wrap = false
+  for opt, val in pairs({
+    cursorline = true,
+    wrap = false,
+    list = false,
+    number = false,
+    relativenumber = false,
+    signcolumn = "no",
+    statuscolumn = "",
+    foldenable = false,
+  }) do
+    vim.wo[win][opt] = val
+  end
 
   vim.api.nvim_buf_set_extmark(buf, ns, 0, 0, { line_hl_group = "LazyGolfDim" })
   for lnum in pairs(headers) do

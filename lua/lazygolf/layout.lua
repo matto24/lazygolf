@@ -246,11 +246,11 @@ function M.winbar()
     return ""
   end
   local par = state.challenge.par
-  local text = ("%%#LazyGolfTitle# LazyGolf %%*  keys %%#LazyGolfKey#%d%%* / par %d"):format(state.keys, par)
+  local text = ("%%#LazyGolfKey# keys %d%%* / par %d"):format(state.keys, par)
   if state.kind == "solved" then
     text = text .. ("  %%#LazyGolfGood#solved %s%%*"):format(stars_text(state.stars))
   end
-  return text .. ("  %%#LazyGolfDim#%s restart  %s menu%%*"):format(M.maps.restart, M.maps.menu)
+  return text
 end
 
 ---Redraw the live counter without touching buffers.
@@ -280,6 +280,8 @@ function M.render(state)
     end
     lines[#lines + 1] = ""
     lines[#lines + 1] = ("%s next unsolved   %s retry   %s menu"):format(M.maps.next, M.maps.restart, M.maps.menu)
+  else
+    lines[#lines + 1] = ("%s restart   %s menu   %s skip to next unsolved"):format(M.maps.restart, M.maps.menu, M.maps.next)
   end
 
   vim.bo[session.info_buf].modifiable = true
