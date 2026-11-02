@@ -30,6 +30,30 @@ local function setup_highlights()
   end
 end
 
+local which_key_muted = false
+
+---which-key swallows a prefix key and later re-feeds it, which the key counter would see twice.
+---Muting it for nofile buffers while a game is open keeps the count exact.
+---@param on boolean
+local function mute_which_key(on)
+  local config = package.loaded["which-key.config"]
+  local bt = config and config.options and config.options.disable and config.options.disable.bt
+  if not bt or on == which_key_muted then
+    return
+  end
+  if on then
+    table.insert(bt, "nofile")
+  else
+    for i = #bt, 1, -1 do
+      if bt[i] == "nofile" then
+        table.remove(bt, i)
+        break
+      end
+    end
+  end
+  which_key_muted = on
+end
+
 ---@param lines string[]
 ---@return integer
 local function scratch(lines)
@@ -69,6 +93,7 @@ end
 ---@return LazyGolf.Session
 function M.open(challenge)
   setup_highlights()
+  mute_which_key(true)
   vim.cmd("tabnew")
   local win = vim.api.nvim_get_current_win()
   local blank = vim.api.nvim_win_get_buf(win)
@@ -179,8 +204,13 @@ function M.open(challenge)
   return session
 end
 
+function M.unmute()
+  mute_which_key(false)
+end
+
 ---@param session LazyGolf.Session
-function M.close(session)
+---@param keep_muted boolean? true when another session is about to take over
+function M.close(session, keep_muted)
   if vim.api.nvim_tabpage_is_valid(session.tab) then
     pcall(vim.cmd, ("tabclose! %d"):format(vim.api.nvim_tabpage_get_number(session.tab)))
   end
@@ -188,6 +218,9 @@ function M.close(session)
     if vim.api.nvim_buf_is_valid(b) then
       pcall(vim.api.nvim_buf_delete, b, { force = true })
     end
+  end
+  if not keep_muted then
+    mute_which_key(false)
   end
 end
 

@@ -73,7 +73,7 @@ function M.start(challenge)
   local session = layout.open(challenge)
   transition({ kind = "playing", challenge = challenge, session = session, keys = 0 })
   if previous then
-    layout.close(previous)
+    layout.close(previous, true)
   end
   layout.render(M.state)
 end
@@ -125,6 +125,7 @@ end
 function M.on_closed(session)
   if current_session() == session then
     transition({ kind = "menu" })
+    layout.unmute()
   end
 end
 

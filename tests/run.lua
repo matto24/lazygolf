@@ -79,6 +79,11 @@ local function setup_surround_for_tests()
 end
 
 local function run_challenges()
+  if vim.env.LAZYGOLF_TRACE then
+    vim.on_key(function(k, typed)
+      out(("  key=%s typed=%s"):format(vim.fn.keytrans(k), vim.fn.keytrans(typed)))
+    end, vim.api.nvim_create_namespace("lazygolf.trace"))
+  end
   local game = require("lazygolf.game")
   local challenges = require("lazygolf.challenges")
   local lazygolf = require("lazygolf")
