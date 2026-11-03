@@ -4,4 +4,7 @@
 # checkout so the surround drills can run when the plugin is not installed in your LazyVim.
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
-exec nvim --headless -c "luafile ${here}/tests/run.lua"
+nvim --headless -c "luafile ${here}/tests/run.lua" </dev/null
+if [ -z "${LAZYGOLF_ONLY:-}" ]; then
+  "${here}/tests/slow_restart.sh"
+fi

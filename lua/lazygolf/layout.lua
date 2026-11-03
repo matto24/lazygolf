@@ -54,6 +54,22 @@ local function mute_which_key(on)
   which_key_muted = on
 end
 
+---@type boolean?
+local saved_timeout
+
+---LazyVim's short 'timeoutlen' assumes which-key waits for the rest of a prefix. With it muted, a
+---slowly typed `<leader>;r` would time out, so wait for the full sequence while the challenge is focused.
+---@param on boolean
+local function hold_pending_keys(on)
+  if on and saved_timeout == nil then
+    saved_timeout = vim.o.timeout
+    vim.o.timeout = false
+  elseif not on and saved_timeout ~= nil then
+    vim.o.timeout = saved_timeout
+    saved_timeout = nil
+  end
+end
+
 ---@param lines string[]
 ---@return integer
 local function scratch(lines)
@@ -189,6 +205,13 @@ function M.open(challenge)
       end)
     end,
   })
+  vim.api.nvim_create_autocmd({ "BufEnter", "BufLeave" }, {
+    group = group,
+    buffer = buf,
+    callback = function(ev)
+      hold_pending_keys(ev.event == "BufEnter")
+    end,
+  })
   vim.api.nvim_create_autocmd("BufWipeout", {
     group = group,
     buffer = buf,
@@ -205,11 +228,13 @@ function M.open(challenge)
   vim.keymap.set("n", M.maps.restart, game("restart"), { buffer = buf, desc = "LazyGolf: restart" })
   vim.keymap.set("n", M.maps.menu, game("open_menu"), { buffer = buf, desc = "LazyGolf: menu" })
   vim.keymap.set("n", M.maps.next, game("next"), { buffer = buf, desc = "LazyGolf: next challenge" })
+  hold_pending_keys(true)
   return session
 end
 
 function M.unmute()
   mute_which_key(false)
+  hold_pending_keys(false)
 end
 
 ---@param session LazyGolf.Session
@@ -225,6 +250,7 @@ function M.close(session, keep_muted)
   end
   if not keep_muted then
     mute_which_key(false)
+    hold_pending_keys(false)
   end
 end
 

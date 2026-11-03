@@ -252,6 +252,7 @@ local function test_game_flow()
   local text_ch = challenges.by_id["ops-ciw"]
   local cursor_ch = challenges.by_id["motions-count-w"]
 
+  local timeout_before = vim.o.timeout
   game.start(text_ch)
   local s = game.state.session
   expect(vim.wo[s.win].diff and vim.wo[s.target_win].diff, "text goal shows both windows in diff mode")
@@ -280,6 +281,8 @@ local function test_game_flow()
   expect(game.state.kind == "playing" and game.state.keys == 0, "restart key returns to a fresh playing state")
   expect(vim.deep_equal(vim.api.nvim_buf_get_lines(game.state.session.buf, 0, -1, false), text_ch.start), "restart restores the start text")
 
+  expect(not vim.o.timeout, "mappings wait for the full sequence while the challenge is focused")
+
   game.start(cursor_ch)
   s = game.state.session
   local marks = vim.api.nvim_buf_get_extmarks(s.buf, vim.api.nvim_create_namespace("lazygolf"), 0, -1, {})
@@ -290,6 +293,7 @@ local function test_game_flow()
   sleep(30)
   expect(game.state.kind == "menu", "closing the game tab returns to the menu state")
   expect(#vim.api.nvim_list_tabpages() == before - 1, "tab closed")
+  expect(vim.o.timeout == timeout_before, "'timeout' restored after the game closes")
 
   vim.fn.delete(tmp)
   progress.path = nil
