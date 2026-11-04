@@ -96,6 +96,17 @@ function M.open_menu()
   require("lazygolf.menu").open()
 end
 
+function M.reset_progress()
+  if vim.fn.confirm("LazyGolf: delete all saved progress?", "&Yes\n&No", 2) ~= 1 then
+    return
+  end
+  progress.clear()
+  vim.notify("LazyGolf: progress reset.", vim.log.levels.INFO)
+  if M.state.kind == "menu" then
+    require("lazygolf.menu").open()
+  end
+end
+
 ---First never-solved challenge, then the first without three stars.
 ---@return LazyGolf.Challenge?
 function M.next_unsolved()

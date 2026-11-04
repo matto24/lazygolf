@@ -36,7 +36,13 @@ local function build()
   return lines, rows, headers
 end
 
+---@type integer?
+local open_win
+
 function M.open()
+  if open_win and vim.api.nvim_win_is_valid(open_win) then
+    vim.api.nvim_win_close(open_win, true)
+  end
   local lines, rows, headers = build()
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
@@ -55,6 +61,7 @@ function M.open()
     title = " LazyGolf ",
     title_pos = "center",
   })
+  open_win = win
   for opt, val in pairs({
     cursorline = true,
     wrap = false,

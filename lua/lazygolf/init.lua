@@ -9,7 +9,7 @@ function M.check(challenge, bufnr, winid)
   return require("lazygolf.check").check(challenge, bufnr, winid)
 end
 
-M.subcommands = { "menu", "next", "reset" }
+M.subcommands = { "menu", "next", "reset", "reset-progress" }
 
 ---@param arg string?
 function M.command(arg)
@@ -21,8 +21,10 @@ function M.command(arg)
     game.next()
   elseif arg == "reset" or arg == "restart" then
     game.restart()
+  elseif arg == "reset-progress" then
+    game.reset_progress()
   else
-    vim.notify("LazyGolf: unknown subcommand '" .. arg .. "' (menu, next, reset)", vim.log.levels.ERROR)
+    vim.notify("LazyGolf: unknown subcommand '" .. arg .. "' (menu, next, reset, reset-progress)", vim.log.levels.ERROR)
   end
 end
 

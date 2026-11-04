@@ -180,6 +180,33 @@ local function test_progress()
   expect(vim.fn.filereadable(tmp) == 1, "file written")
   expect(progress.stars_for(4, 4) == 3 and progress.stars_for(4, 6) == 2 and progress.stars_for(4, 7) == 1, "star thresholds")
   expect(progress.stars({ id = "a", par = 8 }) == 3 and progress.stars({ id = "zzz", par = 8 }) == 0, "stars from stored best")
+  progress.clear()
+  expect(progress.best("a") == nil and progress.best("b") == nil, "clear removes every best")
+  expect(vim.fn.filereadable(tmp) == 0, "clear removes the file")
+  progress.reload()
+  expect(progress.best("a") == nil, "cleared progress stays empty after reload")
+  progress.clear()
+  expect(progress.best("a") == nil, "clearing with no file is harmless")
+
+  local game = require("lazygolf.game")
+  local confirm = vim.fn.confirm
+  progress.record("a", 5)
+  vim.fn.confirm = function() return 2 end
+  vim.cmd("LazyGolf reset-progress")
+  progress.reload()
+  expect(progress.best("a") == 5, "declining the prompt keeps progress")
+  vim.fn.confirm = function() return 1 end
+  game.open_menu()
+  local before = #vim.api.nvim_list_wins()
+  vim.cmd("LazyGolf reset-progress")
+  progress.reload()
+  expect(progress.best("a") == nil and vim.fn.filereadable(tmp) == 0, "confirming the prompt clears progress")
+  expect(#vim.api.nvim_list_wins() == before, "open menu is refreshed without stacking floats")
+  expect(not table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"):find("best", 1, true), "refreshed menu shows no best scores")
+  vim.api.nvim_input("q")
+  sleep(30)
+  vim.fn.confirm = confirm
+
   vim.fn.delete(tmp)
   progress.path = saved
   progress.reload()

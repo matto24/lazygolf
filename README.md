@@ -45,6 +45,7 @@ return {
 | `:LazyGolf` | Opens the menu of categories and challenges with your stars. `<CR>` plays the challenge under the cursor, `q` or `<Esc>` closes. |
 | `:LazyGolf next` | Jumps to the first unsolved challenge, then to the first one without three stars. |
 | `:LazyGolf reset` | Restarts the current challenge. |
+| `:LazyGolf reset-progress` | Deletes every saved best score after a confirmation prompt. |
 
 ## Inside a challenge
 
@@ -77,7 +78,7 @@ A text goal is checked once you are back in Normal mode, so the final `<Esc>` co
 
 Par is the key count of a reference solution, not a proven optimum. Beating par is fine and encouraged.
 
-Best scores are stored in `stdpath("data") .. "/lazygolf.json"`, usually `~/.local/share/nvim/lazygolf.json`. Delete that file to reset all progress.
+Best scores are stored in `stdpath("data") .. "/lazygolf.json"`, usually `~/.local/share/nvim/lazygolf.json`. Run `:LazyGolf reset-progress` to wipe all progress.
 
 ## Categories
 

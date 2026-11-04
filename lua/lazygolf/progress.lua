@@ -79,4 +79,10 @@ function M.record(id, keys)
   return true
 end
 
+---Delete every saved best, on disk and in memory.
+function M.clear()
+  os.remove(M.file())
+  cache = { best = {} }
+end
+
 return M
